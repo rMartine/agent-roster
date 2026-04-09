@@ -1,0 +1,34 @@
+{
+	"coding": {
+		"tools": [
+			"read",
+			"edit",
+			"search",
+			"execute",
+			"todo"
+		],
+		"description": "Standard toolset for agents that read, write, and execute code",
+		"icon": "code"
+	},
+	"design": {
+		"tools": [
+			"read",
+			"edit",
+			"search",
+			"web",
+			"todo"
+		],
+		"description": "Toolset for design and planning agents — no terminal execution",
+		"icon": "lightbulb"
+	},
+	"readonly": {
+		"tools": [
+			"read",
+			"search",
+			"web",
+			"todo"
+		],
+		"description": "Read-only toolset for research and analysis agents",
+		"icon": "search"
+	}
+}

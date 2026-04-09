@@ -1,0 +1,61 @@
+{
+  "name": "agent-forge",
+  "displayName": "Agent Forge",
+  "description": "Deploy, restore, wipe, and check status of your AI agent roster",
+  "version": "0.1.0",
+  "publisher": "agent-forge",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "agentForge.deploy",
+        "title": "Agent Forge: Deploy"
+      },
+      {
+        "command": "agentForge.restore",
+        "title": "Agent Forge: Restore"
+      },
+      {
+        "command": "agentForge.wipe",
+        "title": "Agent Forge: Wipe"
+      },
+      {
+        "command": "agentForge.status",
+        "title": "Agent Forge: Status"
+      }
+    ],
+    "configuration": {
+      "title": "Agent Forge",
+      "properties": {
+        "agentForge.repoPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the roster Git repository"
+        },
+        "agentForge.autoConfirm": {
+          "type": "boolean",
+          "default": false,
+          "description": "Skip confirmation for destructive operations"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --watch"
+  },
+  "dependencies": {
+    "@agent-forge/core": "*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0"
+  }
+}
