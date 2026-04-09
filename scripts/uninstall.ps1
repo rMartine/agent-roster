@@ -12,6 +12,7 @@ if ($code) {
     code --uninstall-extension agent-forge.agent-forge 2>$null
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  Extension uninstalled." -ForegroundColor Green
+        Write-Host "  Reload VS Code to remove the sidebar entry (Ctrl+Shift+P → 'Reload Window')." -ForegroundColor Yellow
     } else {
         Write-Host "  Extension not found or already uninstalled." -ForegroundColor Yellow
     }
@@ -58,5 +59,7 @@ if ((Test-Path $agentForgeDir) -and ((Get-ChildItem $agentForgeDir).Count -eq 0)
     Write-Host "Removed empty .agent-forge directory." -ForegroundColor Green
 }
 
+Write-Host ""
+Write-Host "  IMPORTANT: Reload or restart VS Code to fully remove the Agent Forge sidebar." -ForegroundColor Yellow
 Write-Host ""
 Write-Host "=== Uninstallation Complete ===" -ForegroundColor Cyan
