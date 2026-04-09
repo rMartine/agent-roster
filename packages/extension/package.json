@@ -83,6 +83,17 @@
         "title": "Open File",
         "icon": "$(go-to-file)",
         "category": "Agent Forge"
+      },
+      {
+        "command": "agentForge.enableSubAgents",
+        "title": "Enable Sub-Agent Nesting",
+        "category": "Agent Forge"
+      },
+      {
+        "command": "agentForge.selectImageModel",
+        "title": "Select Image Model",
+        "icon": "$(device-camera)",
+        "category": "Agent Forge"
       }
     ],
     "menus": {
@@ -90,7 +101,8 @@
         { "command": "agentForge.deploy", "when": "view == agentForge.roster", "group": "navigation@1" },
         { "command": "agentForge.restore", "when": "view == agentForge.roster", "group": "navigation@2" },
         { "command": "agentForge.wipe", "when": "view == agentForge.roster", "group": "navigation@3" },
-        { "command": "agentForge.refresh", "when": "view == agentForge.roster", "group": "navigation@4" }
+        { "command": "agentForge.refresh", "when": "view == agentForge.roster", "group": "navigation@4" },
+        { "command": "agentForge.selectImageModel", "when": "view == agentForge.roster", "group": "navigation@5" }
       ],
       "view/item/context": [
         { "command": "agentForge.openFile", "when": "view == agentForge.roster && viewItem == entry", "group": "inline" }

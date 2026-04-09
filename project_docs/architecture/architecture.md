@@ -9,7 +9,7 @@
 ## 1. Repository Layout
 
 ```
-agent-roster/
+agent-forge/
 │
 ├── agent-forge.manifest.jsonc          # Roster manifest (source of truth)
 │
@@ -618,6 +618,108 @@ Declarative deploy risks deleting files the user wants to keep (e.g., files from
 #### Consequences
 - **Positive**: Safer default. No accidental deletions.
 - **Negative**: Stale files may accumulate. `status` will show them as "untracked", which is sufficient feedback.
+
+---
+
+### ADR-009: Git Tool Resolution Strategy
+
+**Status**: Accepted  
+**Date**: 2026-04-08
+
+#### Context
+Agent Forge workflows require Git operations for restore (`git show`), status comparison, and the broader development workflow (branching, merging, tagging). The GitKraken MCP server is available as a preferred tool interface but covers only ~55% of required Git operations. Critically, `merge --no-ff` — required by the project's git workflow for every branch integration — is not supported by GitKraken MCP. Neither are branch delete, pull, fetch, tags, rebase, cherry-pick, stash pop/list/drop, or remote management. The fallback to CLI `git` is therefore not an edge case but a primary execution path.
+
+#### Decision
+Implement a prioritized tool resolution cascade:
+
+1. **GitKraken MCP** — preferred for all supported operations:
+   - Branch create/list, checkout
+   - Add, commit, push (basic)
+   - Status, diff, log, blame
+   - Stash save
+   - Worktree add/list
+
+2. **CLI `git`** — required for all unsupported operations:
+   - `merge --no-ff` (all merges)
+   - Branch delete (`-d`, `-D`)
+   - Pull, fetch
+   - Tags (create, list, delete, push)
+   - Rebase, cherry-pick
+   - Stash pop, list, drop
+   - Remote management (add, remove, set-url)
+   - Worktree remove
+   - Push with `--set-upstream`
+
+3. **Git not found** — if CLI `git` is unavailable on the system:
+   a. Ask user permission to install Git
+   b. If approved: install and proceed
+   c. If denied: skip the git operation, log a warning, proceed without versioning
+   d. Never auto-install without explicit consent
+
+**Implementation approach:**
+- Add a utility function `resolveGitTool(operation: string)` in `packages/core/src/` with a lookup table mapping operations to their required tool
+- The function returns an `ExecutionStrategy` enum value: `GitKrakenMCP | CliGit | Unavailable`
+- The lookup table is a static map — no runtime capability probing needed, since GitKraken MCP's coverage is known at build time
+- The extension/CLI layer handles the `Unavailable` case with user prompts and consent flow
+- `simple-git` (already a dependency per ADR-004) serves as the CLI Git interface for programmatic operations
+
+#### Alternatives Considered
+| Option | Pros | Cons |
+|--------|------|------|
+| GitKraken MCP only | Single interface, consistent | Missing 45% of operations including all merges — blocks core workflow |
+| CLI `git` only | Complete coverage, single code path | Ignores available MCP tooling; loses GitKraken integration benefits (UI, blame views) |
+| Runtime capability probing | Adapts to future MCP additions | Adds latency, complexity, and non-deterministic behavior for no practical gain |
+| **Static lookup cascade** | **Deterministic, zero-latency, simple to maintain** | **Must update lookup table when GitKraken MCP adds operations** |
+
+#### Consequences
+- **Positive**: Every Git operation has a known execution path. The `--no-ff` merge workflow is fully supported. GitKraken MCP is used wherever it adds value. The resolution is deterministic — no surprises.
+- **Negative**: The lookup table requires manual updates if GitKraken MCP adds new operations. Acceptable cost given update frequency.
+- **Risks**: If Git is not installed and the user declines installation, restore operations will fail (they depend on `git show`). This is an accepted degradation — `status` and `deploy` remain functional since they operate on the working tree.
+
+---
+
+### ADR-010: Sub-Agent Nesting Opt-In Notification
+
+**Status**: Accepted  
+**Date**: 2026-04-08
+
+#### Context
+Agent Forge's agent org chart relies on nested delegation: CTO orchestrates Principal Engineer, who delegates to domain engineers (Backend Developer, Frontend Developer, etc.). VS Code's `chat.subagents.allowInvocationsFromSubagents` setting controls whether agents can invoke other agents, and it defaults to `false`. Without this setting enabled, orchestrator agents silently perform all work themselves — the delegation model breaks without any visible error. This is a critical UX and architecture concern: the product's core value proposition depends on a VS Code setting the user may not know exists.
+
+#### Decision
+Hybrid opt-in approach that respects user autonomy (aligns with NFR-USE-1):
+
+1. **On extension activation**, check `chat.subagents.allowInvocationsFromSubagents`
+2. **If `false`**, show an information notification:
+   > "Agent Forge works best with sub-agent nesting enabled. Enable it now?"
+   
+   With two action buttons: **"Yes"** and **"Not Now"**
+3. **If "Yes"**: call `vscode.workspace.getConfiguration('chat.subagents').update('allowInvocationsFromSubagents', true, ConfigurationTarget.Global)` to enable the setting
+4. **If "Not Now"**: suppress the notification for the remainder of the session. Store a `subAgentPromptDismissed` flag in the extension's `context.globalState` with a session timestamp — do not persist across VS Code restarts so the user is reminded on next session
+5. **Register a command** `Agent Forge: Enable Sub-Agent Nesting` in the command palette (via `packages/extension/src/commands.ts`) for manual toggling at any time
+6. **Never silently change** the setting — all changes require explicit user action
+
+**Implementation locations:**
+- Notification check: `packages/extension/src/extension.ts` → `activate()` function, after command registration
+- Setting read: `vscode.workspace.getConfiguration('chat.subagents').get<boolean>('allowInvocationsFromSubagents')`
+- Setting write: `vscode.workspace.getConfiguration('chat.subagents').update('allowInvocationsFromSubagents', true, vscode.ConfigurationTarget.Global)`
+- Command registration: `packages/extension/src/commands.ts` → new `handleEnableSubAgentNesting` handler
+- Session state: `context.globalState.update('subAgentPromptDismissedAt', Date.now())`
+
+**Note on activation events:** This check runs inside `activate()` which is already lazy-loaded per ADR-006 (triggered by `onCommand`). The notification does not affect startup time for users who never invoke Agent Forge commands.
+
+#### Alternatives Considered
+| Option | Pros | Cons |
+|--------|------|------|
+| Silently enable on activation | Zero friction | Violates user autonomy (NFR-USE-1). Users may not expect extensions to change editor settings. |
+| Document in README only | No code needed | Users won't read it. Silent failure when nesting doesn't work. |
+| Hard requirement (refuse to activate) | Guarantees correct config | Overly aggressive. Extension should degrade gracefully, not refuse to run. |
+| **Notification with opt-in** | **Transparent, respects user choice, low friction** | **Users may dismiss and forget — mitigated by palette command** |
+
+#### Consequences
+- **Positive**: Users are informed about the dependency on their first interaction. The setting change is explicit and reversible. The palette command provides a discoverable path for users who dismissed the notification.
+- **Negative**: Adds activation-time logic to the extension. Minimal complexity — one conditional check and one notification call.
+- **Risks**: VS Code could rename or remove the `chat.subagents.allowInvocationsFromSubagents` setting in future versions. Mitigate by wrapping the check in a try-catch so the extension degrades gracefully if the setting doesn't exist.
 
 ---
 
