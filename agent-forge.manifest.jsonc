@@ -1,0 +1,64 @@
+{
+  // Manifest format version. Only "1.0" is supported.
+  "version": "1.0",
+
+  // Target editor.
+  "editor": "vscode",
+
+  // Deployment target paths (Windows environment variables expanded at runtime).
+  "targets": {
+    "prompts": "%APPDATA%/Code/User/prompts",
+    "skills": "%USERPROFILE%/.copilot/skills"
+  },
+
+  // ── Agents ──────────────────────────────────────────────────────────
+  "agents": [
+    // Leadership
+    { "id": "cto",                     "file": "agents/cto.agent.md",                     "category": "leadership",    "model": null, "toolset": null },
+    { "id": "principal-engineer",      "file": "agents/principal-engineer.agent.md",       "category": "leadership",    "model": null, "toolset": null },
+    { "id": "project-manager",         "file": "agents/project-manager.agent.md",          "category": "leadership",    "model": null, "toolset": null },
+
+    // Architecture
+    { "id": "software-architect",      "file": "agents/software-architect.agent.md",       "category": "architecture",  "model": null, "toolset": null },
+
+    // Engineering
+    { "id": "backend-developer",       "file": "agents/backend-developer.agent.md",        "category": "engineering",   "model": null, "toolset": null },
+    { "id": "frontend-developer",      "file": "agents/frontend-developer.agent.md",       "category": "engineering",   "model": null, "toolset": null },
+    { "id": "database-engineer",       "file": "agents/database-engineer.agent.md",        "category": "engineering",   "model": null, "toolset": null },
+    { "id": "devops-engineer",         "file": "agents/devops-engineer.agent.md",          "category": "engineering",   "model": null, "toolset": null },
+    { "id": "dotnet-engineer",         "file": "agents/dotnet-engineer.agent.md",          "category": "engineering",   "model": null, "toolset": null },
+    { "id": "mobile-engineer",         "file": "agents/mobile-engineer.agent.md",          "category": "engineering",   "model": null, "toolset": null },
+    { "id": "ml-engineer",             "file": "agents/ml-engineer.agent.md",              "category": "engineering",   "model": null, "toolset": null },
+    { "id": "data-scientist",          "file": "agents/data-scientist.agent.md",           "category": "engineering",   "model": null, "toolset": null },
+    { "id": "cybersecurity-engineer",  "file": "agents/cybersecurity-engineer.agent.md",   "category": "engineering",   "model": null, "toolset": null },
+    { "id": "qa-engineer",             "file": "agents/qa-engineer.agent.md",              "category": "engineering",   "model": null, "toolset": null },
+
+    // Design
+    { "id": "creative-director",       "file": "agents/creative-director.agent.md",        "category": "design",        "model": null, "toolset": null },
+    { "id": "graphic-designer",        "file": "agents/graphic-designer.agent.md",         "category": "design",        "model": null, "toolset": null },
+    { "id": "ux-engineer",             "file": "agents/ux-engineer.agent.md",              "category": "design",        "model": null, "toolset": null },
+
+    // Documentation
+    { "id": "technical-writer",        "file": "agents/technical-writer.agent.md",         "category": "documentation", "model": null, "toolset": null },
+    { "id": "knowledge-engineer",      "file": "agents/knowledge-engineer.agent.md",       "category": "documentation", "model": null, "toolset": null },
+    { "id": "requirements-engineer",   "file": "agents/requirements-engineer.agent.md",    "category": "documentation", "model": null, "toolset": null }
+  ],
+
+  // ── Instructions ────────────────────────────────────────────────────
+  "instructions": [
+    { "id": "agent-communication",     "file": "instructions/agent-communication.instructions.md" },
+    { "id": "knowledge-base-protocol", "file": "instructions/knowledge-base-protocol.instructions.md" },
+    { "id": "project-conventions",     "file": "instructions/project-conventions.instructions.md" }
+  ],
+
+  // ── Skills ──────────────────────────────────────────────────────────
+  "skills": [
+    { "id": "query-knowledge-base",    "dir": "skills/query-knowledge-base/" },
+    { "id": "scaffold-project",        "dir": "skills/scaffold-project/" }
+  ],
+
+  // ── Toolsets ────────────────────────────────────────────────────────
+  "toolsets": {
+    "file": "config/common.toolsets.jsonc"
+  }
+}

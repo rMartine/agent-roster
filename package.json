@@ -1,0 +1,18 @@
+{
+  "name": "agent-forge-workspace",
+  "private": true,
+  "workspaces": [
+    "packages/core",
+    "packages/extension",
+    "packages/cli"
+  ],
+  "scripts": {
+    "build": "npm run build -w packages/core && npm run build -w packages/extension && npm run build -w packages/cli",
+    "build:core": "npm run build -w packages/core",
+    "build:extension": "npm run build -w packages/extension",
+    "build:cli": "npm run build -w packages/cli"
+  },
+  "devDependencies": {
+    "typescript": "~5.4.0"
+  }
+}
