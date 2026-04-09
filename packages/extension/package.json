@@ -4,6 +4,7 @@
   "description": "Deploy, restore, wipe, and check status of your AI agent roster",
   "version": "0.1.0",
   "publisher": "agent-forge",
+  "icon": "media/agent-forge-icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },

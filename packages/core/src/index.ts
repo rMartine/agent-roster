@@ -49,6 +49,6 @@ export { status } from './status.js';
 export { scaffoldRepo } from './scaffold.js';
 export type { ScaffoldResult } from './scaffold.js';
 
-// Image model
-export { detectHardware, selectImageModel, IMAGE_MODEL_TIERS } from './imageModel.js';
-export type { HardwareInfo, ImageModelTier } from './imageModel.js';
+// Image Model
+export type { HardwareInfo, ImageModelTier, ImageRuntime } from './imageModel.js';
+export { IMAGE_MODEL_TIERS, detectHardware, selectImageModel, selectImageRuntime } from './imageModel.js';

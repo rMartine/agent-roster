@@ -1,6 +1,6 @@
 # Agent Forge — Architecture Design
 
-**Status**: Proposed  
+**Status**: Accepted  
 **Date**: 2026-04-08  
 **Author**: Software Architect  
 
@@ -444,7 +444,7 @@ The `package.json` `bin` field maps `"agent-forge"` to the compiled entry point.
 
 ### ADR-001: TypeScript Monorepo with Shared Core
 
-**Status**: Proposed  
+**Status**: Accepted  
 **Date**: 2026-04-08
 
 #### Context
@@ -469,7 +469,7 @@ Use a TypeScript monorepo with three packages under `packages/`. The `core` pack
 
 ### ADR-002: JSONC for Manifest Format
 
-**Status**: Proposed  
+**Status**: Accepted  
 **Date**: 2026-04-08
 
 #### Context
@@ -495,7 +495,7 @@ Use JSONC. Parse with `jsonc-parser` (the same library VS Code itself uses, main
 
 ### ADR-003: SHA-256 Content Hashing for Status Comparison
 
-**Status**: Proposed  
+**Status**: Accepted  
 **Date**: 2026-04-08
 
 #### Context
@@ -520,7 +520,7 @@ SHA-256 content hashing via Node.js `crypto` module. No timestamp comparison.
 
 ### ADR-004: `simple-git` for Restore Operation
 
-**Status**: Proposed  
+**Status**: Accepted  
 **Date**: 2026-04-08
 
 #### Context
@@ -545,7 +545,7 @@ Use `simple-git` — a mature, well-maintained Node.js wrapper around the Git CL
 
 ### ADR-005: `commander` for CLI Argument Parsing
 
-**Status**: Proposed  
+**Status**: Accepted  
 **Date**: 2026-04-08
 
 #### Context
@@ -569,7 +569,7 @@ Use `commander` — the most widely used Node.js CLI framework.
 
 ### ADR-006: Lazy Extension Activation
 
-**Status**: Proposed  
+**Status**: Accepted  
 **Date**: 2026-04-08
 
 #### Context
@@ -586,7 +586,7 @@ Use `onCommand` activation events. The extension is not loaded until the user in
 
 ### ADR-007: Deploy Reads Working Tree, Not Git State
 
-**Status**: Proposed  
+**Status**: Accepted  
 **Date**: 2026-04-08
 
 #### Context
@@ -603,7 +603,7 @@ OQ-LIFECYCLE-1 and the requirements state that deploy reads files as they are on
 
 ### ADR-008: Additive Deploy (Not Declarative)
 
-**Status**: Proposed  
+**Status**: Accepted  
 **Date**: 2026-04-08
 
 #### Context

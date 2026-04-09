@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { handleDeploy, handleRestore, handleWipe, handleStatus, resolveRepoPath } from './commands';
 import { RosterTreeViewProvider } from './rosterTreeView';
-import { scaffoldRepo, detectHardware, selectImageModel } from '@agent-forge/core';
+import { scaffoldRepo, detectHardware, selectImageModel, selectImageRuntime } from '@agent-forge/core';
 
 let outputChannel: vscode.OutputChannel;
 
@@ -16,7 +16,7 @@ function updateRepoContext(): void {
   vscode.commands.executeCommand('setContext', 'agentForge.repoConfigured', !!repoPath);
 }
 
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
   outputChannel = vscode.window.createOutputChannel('Agent Forge');
 
   const provider = new RosterTreeViewProvider(() => getConfiguredRepoPath());
@@ -112,26 +112,48 @@ export function activate(context: vscode.ExtensionContext): void {
     outputChannel,
   );
 
-  // Ollama prerequisite check
-  const ollamaDismissed = context.globalState.get<boolean>('ollamaPromptDismissed');
-  if (!ollamaDismissed) {
+  // Image generation prerequisite check
+  const prereqDismissed = context.globalState.get<boolean>('imagePrereqPromptDismissed');
+  if (!prereqDismissed) {
     const cp = await import('node:child_process');
-    try {
-      cp.execFileSync('ollama', ['--version'], { stdio: 'ignore' });
-    } catch {
-      vscode.window
-        .showWarningMessage(
-          'Agent Forge: Ollama is not installed. Image generation features require Ollama.',
-          'Download Ollama',
-          'Dismiss',
-        )
-        .then((choice) => {
-          if (choice === 'Download Ollama') {
-            vscode.env.openExternal(vscode.Uri.parse('https://ollama.com/download'));
-          } else if (choice === 'Dismiss') {
-            context.globalState.update('ollamaPromptDismissed', true);
-          }
-        });
+    const runtime = selectImageRuntime();
+    if (runtime === 'ollama') {
+      try {
+        cp.execFileSync('ollama', ['--version'], { stdio: 'ignore' });
+      } catch {
+        vscode.window
+          .showWarningMessage(
+            'Agent Forge: Ollama is not installed. Image generation features require Ollama.',
+            'Download Ollama',
+            'Dismiss',
+          )
+          .then((choice) => {
+            if (choice === 'Download Ollama') {
+              vscode.env.openExternal(vscode.Uri.parse('https://ollama.com/download'));
+            } else if (choice === 'Dismiss') {
+              context.globalState.update('imagePrereqPromptDismissed', true);
+            }
+          });
+      }
+    } else {
+      // diffusers runtime — check for python + torch
+      try {
+        cp.execFileSync('python', ['-c', 'import torch'], { stdio: 'ignore', timeout: 10_000 });
+      } catch {
+        vscode.window
+          .showWarningMessage(
+            'Agent Forge: Python with PyTorch is required for image generation. Install Python 3.11+ and PyTorch with CUDA support.',
+            'PyTorch Install Guide',
+            'Dismiss',
+          )
+          .then((choice) => {
+            if (choice === 'PyTorch Install Guide') {
+              vscode.env.openExternal(vscode.Uri.parse('https://pytorch.org/get-started/locally/'));
+            } else if (choice === 'Dismiss') {
+              context.globalState.update('imagePrereqPromptDismissed', true);
+            }
+          });
+      }
     }
   }
 
@@ -192,39 +214,111 @@ async function runImageModelSelection(output: vscode.OutputChannel): Promise<voi
   const hw = detectHardware();
   output.appendLine(`[Image Model] GPU: ${hw.gpu ?? 'none'}, VRAM: ${hw.vramMB} MB, RAM: ${hw.ramMB} MB`);
 
-  const { model, description } = selectImageModel(hw.vramMB);
+  const runtime = selectImageRuntime();
+  output.appendLine(`[Image Model] Runtime: ${runtime}`);
+
+  const { model, pipelineClass, description } = selectImageModel(hw.vramMB);
   output.appendLine(`[Image Model] Selected: ${model} — ${description}`);
 
-  // Pull via Ollama
   const cp = await import('node:child_process');
-  try {
-    cp.execFileSync('ollama', ['--version'], { stdio: 'ignore' });
-  } catch {
-    vscode.window.showErrorMessage('Agent Forge: Ollama is not installed. Cannot pull image model.');
-    return;
-  }
 
-  await vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: `Agent Forge: Downloading image model '${model}'…`,
-      cancellable: false,
-    },
-    () =>
-      new Promise<void>((resolve, reject) => {
-        cp.execFile('ollama', ['pull', model], { timeout: 600_000 }, (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
-      }),
-  ).catch((err: unknown) => {
-    const msg = err instanceof Error ? err.message : String(err);
-    vscode.window.showErrorMessage(`Agent Forge: Failed to pull model '${model}' — ${msg}`);
-    throw err;
-  });
+  if (runtime === 'ollama') {
+    // macOS with Ollama available
+    try {
+      cp.execFileSync('ollama', ['--version'], { stdio: 'ignore' });
+    } catch {
+      vscode.window.showErrorMessage('Agent Forge: Ollama is not installed. Cannot pull image model.');
+      return;
+    }
+
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Agent Forge: Downloading image model '${model}'…`,
+        cancellable: false,
+      },
+      () =>
+        new Promise<void>((resolve, reject) => {
+          cp.execFile('ollama', ['pull', model], { timeout: 600_000 }, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+        }),
+    ).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      vscode.window.showErrorMessage(`Agent Forge: Failed to pull model '${model}' — ${msg}`);
+      throw err;
+    });
+  } else {
+    // diffusers runtime — check for diffusers, offer install, download model
+    try {
+      cp.execFileSync('python', ['-c', 'import diffusers; print(diffusers.__version__)'], {
+        encoding: 'utf-8',
+        timeout: 10_000,
+      });
+    } catch {
+      const install = await vscode.window.showWarningMessage(
+        'Agent Forge: Python `diffusers` is not installed. Install it now?',
+        'Install',
+        'Cancel',
+      );
+      if (install !== 'Install') { return; }
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Agent Forge: Installing diffusers and dependencies…',
+          cancellable: false,
+        },
+        () =>
+          new Promise<void>((resolve, reject) => {
+            cp.execFile(
+              'pip',
+              ['install', 'diffusers', 'transformers', 'accelerate', 'safetensors', 'pillow'],
+              { timeout: 300_000 },
+              (err) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve();
+                }
+              },
+            );
+          }),
+      ).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(`Agent Forge: Failed to install diffusers — ${msg}`);
+        throw err;
+      });
+    }
+
+    // Download model to HuggingFace cache
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Agent Forge: Downloading image model '${model}'…`,
+        cancellable: false,
+      },
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const script = `from diffusers import ${pipelineClass}; ${pipelineClass}.from_pretrained('${model}')`;
+          cp.execFile('python', ['-c', script], { timeout: 600_000 }, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+        }),
+    ).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      vscode.window.showErrorMessage(`Agent Forge: Failed to download model '${model}' — ${msg}`);
+      throw err;
+    });
+  }
 
   // Write model name into agent file
   const content = fs.readFileSync(agentFile, 'utf-8');
