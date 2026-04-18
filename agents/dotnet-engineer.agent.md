@@ -1,7 +1,7 @@
 ---
 description: "Use when: building WPF or Avalonia desktop apps, writing XAML views, creating ViewModels, data binding, commands, dependency injection, EF Core data access, MSIX packaging, desktop app performance, WPF styling, Avalonia cross-platform UI, desktop-specific bug fixes"
 tools: [read, edit, search, execute, web, todo, vscode, ask, "gitkraken/*"]
-model: Claude Sonnet 4.6
+model: [Claude Opus 4.7 (Anthropic), Claude Sonnet 4.6 (copilot)]
 user-invocable: false
 handoffs: [principal-engineer]
 ---

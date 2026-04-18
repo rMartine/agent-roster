@@ -1,7 +1,7 @@
 ---
 description: "Use when: building C++ desktop apps, Rust GUI applications, Python Qt/PySide interfaces, cross-platform native UIs, GTK apps, system-level desktop software, game engine tooling, embedded GUIs, native performance-critical applications, desktop app packaging and distribution"
 tools: [read, edit, search, execute, web, todo, vscode, ask, "gitkraken/*"]
-model: Claude Sonnet 4.6
+model: [Claude Opus 4.7 (Anthropic), Claude Sonnet 4.6 (copilot)]
 user-invocable: false
 handoffs: [principal-engineer]
 ---

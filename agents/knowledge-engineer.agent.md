@@ -1,7 +1,7 @@
 ---
 description: "Use when: capturing lessons learned, cataloging error patterns, querying past mistakes, building knowledge repositories, preventing recurring defects, institutional memory, cross-project pattern analysis, onboarding context, post-mortem knowledge extraction, anti-pattern documentation"
 tools: [read, edit, search, execute, web, todo, vscode, ask, "gitkraken/*", "com_docker_do/*"]
-model: Claude Sonnet 4.6
+model: [Claude Opus 4.7 (Anthropic), Claude Sonnet 4.6 (copilot)]
 handoffs: [principal-engineer]
 ---
 
