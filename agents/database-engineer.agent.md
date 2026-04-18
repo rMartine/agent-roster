@@ -1,7 +1,7 @@
 ---
 description: "Use when: designing database tables, writing Drizzle schema, creating migrations, writing seed scripts, query optimization, adding indexes, modifying enums, PostgreSQL extensions (PostGIS, PGVector), data modeling, CSV data imports"
-tools: [read, edit, search, execute, web, todo, vscode, ask, "gitkraken/*"]
-model: Claude Sonnet 4.6
+tools: [all-builtins]
+model: [Claude Opus 4.7 (Anthropic), Claude Sonnet 4.6 (copilot)]
 user-invocable: false
 handoffs: [principal-engineer]
 ---
